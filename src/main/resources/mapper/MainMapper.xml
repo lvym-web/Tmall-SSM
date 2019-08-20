@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lvym.dao.MainMapper">
+
+	<resultMap type="product" id="pro">
+		<id column="id" property="id" />
+		<result column="name" property="name" />
+		<result column="originalPrice" property="originalprice" />
+		<result column="promotePrice" property="promoteprice" />
+		<result column="month" property="createdate" />
+       <result column="stock" property="stock"/>
+		<collection property="productimage" ofType="com.lvym.beans.Productimage">
+			<id column="piid" property="pid" />
+		</collection>
+
+		<collection property="review" ofType="com.lvym.beans.Review">
+			<id column="rid" property="id" />
+			<result column="content" property="content" />
+		</collection>
+	</resultMap>
+
+	<select id="getForesearch" resultMap="pro">
+		SELECT p.id,p.`name`,p.originalPrice,p.promotePrice,
+		p.createDate month,p.stock,pi.id piid,r.content,r.id rid 
+		from product p LEFT JOIN productimage pi ON p.id=pi.pid
+		LEFT JOIN review r ON r.pid=p.id where p.name like "%"#{keyword}"%"
+
+	</select>
+
+	<resultMap type="product" id="pcpr">
+			<result column="pname" property="name" />
+				<association property="category" javaType="category">
+			<id column="cid" property="id" />
+			<result column="cname" property="name" />
+		</association>
+	</resultMap>
+
+	<select id="getForeproduct" resultMap="pcpr">
+		SELECT p.`name`pname,c.`name` cname,c.id cid
+		FROM product p,category c where p.id=#{id} and p.cid=c.id
+	</select>
+			
+		<select id="getProductimages" resultType="productimage">
+		SELECT id from productimage where pid=#{id}
+		
+		</select>	
+		<select id="getProduct" resultType="product">
+		SELECT id,name,subTitle,originalPrice,promotePrice,createDate,stock from product where id=#{id}
+				
+		</select>
+		<select id="getReview" resultType="review">
+		
+		SELECT COUNT(content) content,id from review where pid=#{id}
+		
+		</select>
+		
+		<select id="getOrderItem" resultType="Orderitem">
+			SELECT * from orderitem where uid=#{id}
+		</select>
+		<select id="getOrderItems" resultType="Orderitem">
+			SELECT * from orderitem where pid=#{id} and uid=#{uid}
+		</select>
+		
+	
+	<resultMap type="category" id="cpp">
+    	<id column="cid" property="id"/>
+    	<result column="cname" property="name"/>
+    	<collection property="products" ofType="product">
+    		<id column="pid" property="id"/>
+    	<result column="pname" property="name"/>
+    	<result column="subTitle" property="subtitle"/>
+    	<result column="promotePrice" property="promoteprice"/>
+    	 <collection property="productimage" ofType="productimage">
+    		<id column="id" property="id"/>
+    	</collection> 
+    	<collection property="orderitem" ofType="orderitem">
+    	<result column="number" property="number"/>
+    	</collection>
+    	<collection property="review" ofType="review">
+    	<result column="content" property="content"/>
+    	</collection>
+    	</collection>
+    	</resultMap>
+
+<select id="getForecategory" resultMap="cpp">
+SELECT c.id cid,c.`name` cname,p.id pid,p.`name` pname,
+p.subTitle,promotePrice,pi.id,o.number,r.content
+from category c
+LEFT JOIN product p ON c.id=p.cid
+ LEFT JOIN productimage pi ON pi.pid=p.id 
+LEFT JOIN orderitem o ON o.pid=p.id
+LEFT  JOIN review r ON r.pid=p.id
+ where c.id=#{cid} GROUP BY p.id
+</select>	
+
+	
+		
+	<update id="updateOderItem">
+	update orderitem set number=#{number} where pid=#{pid} and uid=#{uid}
+	</update>	
+	
+	
+		
+	<insert id="addForebuyone" useGeneratedKeys="true" keyProperty="id">
+	insert into orderitem (pid,oid,uid,number)values(#{pid},0,#{uid},#{number})
+	</insert>	
+	
+	<resultMap type="orderitem" id="op">
+	<id column="od" property="id"/>
+	<result column="number" property="number"/>
+	<result column="uid" property="uid"/>
+	<result column="opid" property="pid"/>
+	
+	<association property="product" javaType="product">
+		<id column="id" property="id"/>
+    	<result column="name" property="name"/>
+    	<result column="originalPrice" property="originalprice"/>
+    	<result column="promotePrice" property="promoteprice"/>
+    	<result column="stock" property="stock"/>
+    	<collection property="productimage" ofType="productimage">
+    	<id column="pid" property="id"/>
+    	</collection>
+	</association>
+	</resultMap>
+	<select id="getOrderitem" resultMap="op">
+SELECT p.id,p.`name`,p.originalPrice,p.promotePrice,o.number,o.id od,o.uid,o.pid opid,pi.id pid from orderitem o,product p,productimage pi where o.pid=p.id and p.id=pi.pid and o.id=#{id} GROUP BY o.id
+	</select>
+	
+	
+	<insert id="addOrder" useGeneratedKeys="true" keyProperty="id">
+	INSERT INTO order_ (orderCode,address,post,receiver,mobile,userMessage,createDate,payDate,deliveryDate,confirmDate,uid,status,delivery)
+	VALUES(#{ordercode},#{address},#{post},#{receiver},#{mobile},#{usermessage},#{createdate},NOW(),NOW(),NOW(),#{uid},'待付款',#{delivery})
+	</insert>	
+	<update id="updateOrderitem">
+	update orderitem set oid=#{oid} where pid=#{pid} and uid=#{uid}
+	</update>
+	
+	<select id="getPayed" resultType="order">
+	select id,address,receiver,mobile from order_ where id=#{oid}
+	</select>
+	
+	
+		
+	<select id="getOrderitemByOne" resultType="orderitem">
+	SELECT * from orderitem where uid=#{id} and pid=#{pid}
+	</select>	
+	
+	<insert id="addShopCart" useGeneratedKeys="true" keyProperty="id">
+	insert into orderitem (pid,oid,uid,number)values(#{pid},0,#{uid},#{number})
+	</insert>
+	
+	<update id="updateShopCart">
+	update orderitem set number=#{number} where pid=#{pid} and uid=#{uid}
+	</update>
+	
+	
+	<select id="getCartOrderitem" resultMap="op">
+SELECT p.id,p.`name`,p.originalPrice,p.promotePrice,
+	p.stock,o.number,o.id od,o.uid,o.pid opid,pi.id pid 
+	from orderitem o,order_ oo,product p,productimage pi where o.pid=p.id 
+	and p.id=pi.pid and o.uid=#{uid} and o.mark=0 GROUP BY o.id ORDER BY oo.createDate
+	</select>
+	
+	<update id="updateOrder">
+	update order_ set status='待发货' where id=#{oid}
+	</update>
+	
+	<resultMap type="order" id="oopp">
+	<id column="id" property="id"/>
+	<result column="status" property="status"/>
+	<result column="createDate" property="createdate"/>
+	<result column="orderCode" property="ordercode"/>
+	<collection property="orderitems" ofType="orderitem">
+	<id column="oiid" property="id"/>
+	<result column="number" property="number"/>
+	<association property="product" javaType="product">
+	<id column="pid" property="id"/>
+	<result column="name" property="name"/>
+	<result column="originalPrice" property="originalprice"/>
+	<result column="promotePrice" property="promoteprice"/>
+	<collection property="productimage" ofType="productimage">
+	<id column="piid" property="id"/>
+	</collection>
+	</association>
+	</collection>
+	</resultMap>
+	
+	<select id="getBought" resultMap="oopp">
+	SELECT o.id,o.`status`,o.createDate,o.orderCode,
+	p.id pid,p.`name`,p.originalPrice,p.promotePrice,
+	pi.id piid,oi.id oiid,oi.number from order_ o
+INNER JOIN orderitem oi on o.id=oi.oid
+INNER JOIN product p ON oi.pid=p.id
+INNER JOIN productimage pi on p.id=pi.pid 
+where o.uid=#{id} and o.id=#{oid} and o.`status`!='已删除' GROUP BY oi.pid ORDER BY o.id	
+
+	</select>
+	
+	
+	
+	<select id="getOrderitemcart" resultType="int">
+	SELECT count(1) from orderitem where uid=#{uid} and pid=#{pid}
+	</select>
+	
+	<update id="updateOderItemStatus">
+	update orderitem set mark=1 where oid=#{oid}
+	</update>
+	
+	<update id="updateOrderHide">
+	update order_ set status='已删除' where id=#{oid}
+	</update>
+	
+	<select id="getWaitsBought" resultMap="oopp">
+	SELECT o.id,o.`status`,o.createDate,o.orderCode,
+	p.id pid,p.`name`,p.originalPrice,p.promotePrice,
+	pi.id piid,oi.id oiid,oi.number from order_ o
+	INNER JOIN orderitem oi on o.id=oi.oid
+	INNER JOIN product p ON oi.pid=p.id
+	INNER JOIN productimage pi on p.id=pi.pid 
+	where o.uid=#{id} and o.status=#{status} GROUP BY oi.pid ORDER BY o.id	
+	</select>
+	
+	<select id="getBoughtop" resultMap="oopp">
+	SELECT o.id,o.`status`,o.createDate,o.orderCode,
+	p.id pid,p.`name`,p.originalPrice,p.promotePrice,
+	pi.id piid,oi.id oiid,oi.number from order_ o
+	INNER JOIN orderitem oi on o.id=oi.oid
+	INNER JOIN product p ON oi.pid=p.id
+	INNER JOIN productimage pi on p.id=pi.pid 
+	where o.uid=#{uid} and o.status!='待付款'and o.status!='已删除' GROUP BY oi.pid ORDER BY o.id	
+	</select>
+	
+	<resultMap type="order" id="opp">
+	<id column="oid" property="id"/>
+	<result column="status" property="status"/>
+	<result column="createDate" property="createdate"/>
+	<result column="orderCode" property="ordercode"/>
+	<result column="address" property="address"/>
+	<result column="payDate" property="paydate"/>
+	<result column="mobile" property="mobile"/>
+	<result column="receiver" property="receiver"/>
+	<collection property="orderitems" ofType="orderitem">
+	<association property="product" javaType="product">
+	<result column="name" property="name"/>
+	<result column="originalPrice" property="originalprice"/>
+	<result column="promotePrice" property="promoteprice"/>
+	<collection property="productimage" ofType="productimage">
+	<id column="piid" property="id"/>
+	</collection>
+	</association>
+	</collection>
+	</resultMap>
+	
+	<select id="getOrderConfirmPay" resultMap="opp">
+	SELECT o.id oid,o.createDate,o.payDate,o.orderCode,
+o.address,o.mobile,o.post,o.receiver,pi.id piid,
+p.`name`,p.originalPrice,p.promotePrice from order_ o
+INNER JOIN orderitem oi ON o.id=oi.oid
+INNER JOIN product p ON oi.pid=p.id
+INNER JOIN productimage pi ON p.id=pi.pid where o.id=#{oid} GROUP BY o.id
+	</select>
+	<resultMap type="order" id="opps">
+	<id column="oid" property="id"/>
+	<result column="createDate" property="createdate"/>
+		<collection property="orderitems" ofType="orderitem">
+	<id column="oiid" property="id"/>
+	<result column="number" property="number"/>
+	<association property="product" javaType="product">
+	<id column="pid" property="id"/>
+	<result column="originalPrice" property="originalprice"/>
+    	<collection property="productimage" ofType="productimage">
+	<id column="piid" property="id"/>
+	</collection>
+	</association>
+	</collection>
+	</resultMap>
+	<select id="getOrferReview" resultMap="opps">
+	
+	SELECT o.id oid,o.createDate,pi.id piid,p.`name`,p.originalPrice,p.id pid,oi.id oiid,oi.number from order_ o
+INNER JOIN orderitem oi ON o.id=oi.oid
+INNER JOIN product p ON oi.pid=p.id
+INNER JOIN productimage pi ON p.id=pi.pid where o.id=#{oid} GROUP BY o.id
+	</select>
+	
+	<update id="updateOrderConfirm">
+	update order_ set status='待评价' where id=#{oid}
+	</update>
+	
+</mapper>

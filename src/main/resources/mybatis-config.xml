@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+  <configuration>
+  <settings>
+  <!-- 开启延迟加载 -->
+<setting name="lazyLoadingEnabled" value="true"/>
+<!-- 设置加载的数据是按需还是全部 -->
+<setting name="aggressiveLazyLoading" value="false"/>
+
+<setting name="mapUnderscoreToCamelCase" value="true"/>
+<setting name="jdbcTypeForNull" value="NULL"/>
+   <!-- 设置日志打印 -->
+   
+   <setting name="logImpl" value="STDOUT_LOGGING"/>
+   
+  </settings>
+  <typeAliases>
+<!-- 默认类名首字母小写 -->
+<!-- <typeAlias type="com.ns.entiy.Employee" alias="emp" /> -->
+<!-- 类很多的情况下，可以批量设置别名这个包下的每一个类创建一个默认的别名，就是简
+单类名小写 假如包下还有子包与父包类名相同可以用注解@alias -->
+<package name="com.lvym.beans"/>
+</typeAliases>
+
+	<!-- 分页 -->
+ <plugins>
+<plugin interceptor="com.github.pagehelper.PageInterceptor"></plugin>
+</plugins> 
+
+  </configuration>

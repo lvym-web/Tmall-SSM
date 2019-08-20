@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lvym.dao.AdminMapper">
+
+<resultMap type="product" id="pro">
+		<id column="id" property="id" />
+		<result column="name" property="name" />
+		<result column="originalPrice" property="originalprice" />
+		<result column="promotePrice" property="promoteprice" />
+		       <result column="stock" property="stock"/>
+		       <result column="subTitle" property="subtitle"/>
+		<collection property="productimage" ofType="com.lvym.beans.Productimage">
+			<id column="piid" property="pid" />
+		</collection>
+
+	</resultMap>
+
+ <select id="getAdmin_category_list" resultType="category">
+  select * from category
+ </select>
+ <select id="getAdmin_property_list" resultType="property">
+  select * from property where cid=#{cid}
+ </select>
+ 
+ <select id="getAdmin_product_list" resultMap="pro">
+ SELECT p.id,p.`name`,p.originalPrice,p.promotePrice,p.subTitle,p.stock,pi.id piid 
+		from product p LEFT JOIN productimage pi ON p.id=pi.pid where cid=#{cid} GROUP BY p.id
+
+ </select>
+ 
+ <select id="getAdmin_category_edit" resultType="category">
+ select * from category where id=#{id}
+ 
+ </select>
+ 
+ <delete id="deleteAdmin_category_delete">
+ delete from category where id=#{id}
+ </delete>
+ 
+ <update id="updateCategoryImages">
+ update category set id=#{no},name=#{name} where id=#{id}
+ </update>
+ 
+ 
+ <update id="updateCategoryImage">
+ update category set id=#{newNo},name=#{name} where id=#{id}
+ </update>
+ 
+ <select id="getCategory" resultType="category">
+   select MAX(id) id from category
+ </select>
+ 
+ <insert id="addAdmin_category_add">
+ insert into category (name)values(#{name})
+ </insert>
+ 
+ <resultMap type="property" id="propertys">
+ <id column="id" property="id"/>
+ <result column="name" property="name"/> 
+ <association property="category" javaType="com.lvym.beans.Category">
+ <id column="cid" property="id"/>
+ <result column="cname" property="name"/> 
+ </association>
+ </resultMap>
+ 
+ <select id="getAdmin_property_edit" resultMap="propertys">
+  select p.id,p.`name`,c.id cid,c.`name` cname from property p
+INNER JOIN category c ON p.cid=c.id where p.id=#{id}
+ </select>
+ 
+ <delete id="deleteAdmin_property_delete">
+ delete from property where id=#{id}
+ </delete>
+ 
+ <insert id="addAdmin_property_add">
+ insert into property (cid,name)values(#{cid},#{name})
+ </insert>
+ 
+ <update id="updateAdmin_property_update">
+ update property set name=#{name} where id=#{id}
+ </update>
+ 
+ 
+ <select id="getAdmin_productImage_list" resultType="productimage">
+ SELECT * from productimage where pid=#{pid}
+ </select>
+ 
+ <select id="getProductID" resultType="product">
+ select id from product where id=#{pid}
+ </select>
+ <select id="getAdmin_productImage_lists" resultType="productimage">
+SELECT * from productimage where pid=#{pid} GROUP BY pid
+ </select>
+ 
+ <resultMap type="propertyvalue" id="pp">
+ <id column="id" property="id"/>
+ <result column="value" property="value"/> 
+ <association property="property" javaType="property">
+  <result column="name" property="name"/> 
+ </association>
+ </resultMap>
+ <select id="getAdmin_propertyValue_edit" resultMap="pp">
+ SELECT pv.id,pv.`value`, p.`name` from propertyvalue pv,property p where pv.ptid=p.id and pv.pid=#{pid}
+ </select>
+ 
+ <select id="getAdmin_product_edit" resultType="product">
+ SELECT * from product p,category c where p.cid=c.id and id=#{id}
+ </select>
+ 
+ <delete id="deleteAdmin_product_delete">
+ delete from product where id=#{id}
+ </delete>
+ 
+ <select id="getProductimageID" resultType="productimage">
+ select MAX(id) id from productimage
+ </select>
+ 
+ <insert id="addAdmin_productImage_add">
+ 
+ insert into productimage (pid,type)values(#{pid},#{type})
+ 
+  </insert>
+ 
+ <delete id="deleteAdmin_productImage_delete">
+ delete from productimage where id=#{id}
+ </delete>
+ 
+ <insert id="addAdmin_product_add">
+ insert into product (name,subTitle,originalPrice,promotePrice,stock,cid,createDate)
+ values(#{name},#{subtitle},#{originalprice},#{promoteprice},#{stock},#{cid},NOW())
+ </insert>
+ 
+ <update id="updateAdmin_product_update">
+ update product set name=#{name},subTitle=#{subtitle},originalPrice=#{originalprice},promotePrice=#{promoteprice},stock=#{stock} where id=#{id}
+ 
+ </update>
+ 
+ <resultMap type="order" id="oopp">
+ <id column="id" property="id"/>
+ <result column="receiver" property="receiver"/>
+ <result column="status" property="status"/>
+ <result column="confirmDate" property="confirmdate"/>
+ <result column="createDate" property="createdate"/>
+ <result column="deliveryDate" property="deliverydate"/>
+ <result column="payDate" property="paydate"/>
+ <collection property="orderitems" ofType="orderitem">
+ <id column="oiid" property="id"/>
+ <result column="number" property="number"/>
+ <association property="product" javaType="product">
+ <id column="pid" property="id"/>
+ <result column="originalPrice" property="originalprice"/>
+ <result column="promotePrice" property="promoteprice"/>
+ <result column="name" property="name"/>
+ <collection property="productimage" ofType="productimage">
+  <id column="piid" property="id"/>
+ </collection>
+ 
+ </association>
+ 
+ </collection>
+ 
+ </resultMap>
+ 
+ <select id="getAdmin_order_list" resultMap="oopp">
+ SELECT o.id,o.`status`,o.receiver,o.confirmDate,o.createDate,o.deliveryDate,o.payDate,
+oi.number,p.originalPrice,p.promotePrice,p.`name`,p.id pid,pi.id piid
+ from order_ o
+INNER JOIN orderitem oi on o.id=oi.oid
+INNER JOIN product p ON oi.pid=p.id
+INNER JOIN productimage pi on p.id=pi.pid 
+where o.uid!=1 and oi.pid!=0 and oi.number!=0 GROUP BY oi.pid ORDER BY o.id
+
+ </select>
+ 
+ <update id="updateAdmin_order">
+ update order_ set status='待收货' where id=#{id}
+ </update>
+ 
+ 
+ 
+</mapper>

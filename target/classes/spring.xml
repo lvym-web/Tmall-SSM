@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+	<!--1.扫描所有包中的类 -->
+	<context:component-scan base-package="com.lvym">
+		<context:exclude-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+
+	<!--2.扫描类路径下的resources/jdbc.properties文件 -->
+	<context:property-placeholder location="classpath:jdbc.properties"
+		ignore-unresolvable="true" />
+	<!--3、加载数据源 -->
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource"
+		init-method="init" destroy-method="close">
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+	<!--4、创建sqlSessionFactory，加载mybatis的配置文件，注入数据源 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="configLocation" value="classpath:mybatis-config.xml"></property>
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="mapperLocations" value="classpath:mapper/*.xml"></property>
+	</bean>
+	<!--5、扫描dao接口所在的包，生成代理实现类 -->
+	<mybatis-spring:scan base-package="com.lvym.dao" />
+	<!--6、平台事物管理器 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	<!--7、通知 -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="add*" isolation="REPEATABLE_READ"
+				rollback-for="Exception" />
+			<tx:method name="update*" isolation="REPEATABLE_READ"
+				rollback-for="Exception" />
+			<tx:method name="get*" isolation="REPEATABLE_READ"
+				read-only="true" />
+			<tx:method name="delete*" rollback-for="Exception" />
+			<tx:method name="find*" isolation="REPEATABLE_READ"
+				read-only="true" />
+			<tx:method name="*" />
+		</tx:attributes>
+	</tx:advice>
+
+	<!--8、aop管理事物 -->
+	<aop:config>
+		<aop:pointcut expression="execution(* com.lvym.service..*.*(..))"
+			id="serviceMethod" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="serviceMethod" />
+	</aop:config>
+<!-- 配置上传解析器的实现类 -->
+	   <bean id="filterMultipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="defaultEncoding" value="UTF-8"></property>
+		<!-- 最大10M -->
+		<property name="maxUploadSize" value="10485760"></property> 
+	</bean>   
+</beans>
