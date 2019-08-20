@@ -48,7 +48,7 @@ public class UserController {
 		
 		List<Category> categories=us.getAllCategory();
 		model.addAttribute("cs",categories);
-			
+			System.out.println("0000000000000");
 		return "fore/home";
 	}
 	@GetMapping("forelogout")
